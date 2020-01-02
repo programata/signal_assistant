@@ -20,9 +20,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Paint.Cap;
-import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -75,10 +74,10 @@ public class MultiBoxTracker {
 
     boxPaint.setColor(Color.RED);
     boxPaint.setStyle(Style.STROKE);
-    boxPaint.setStrokeWidth(10.0f);
-    boxPaint.setStrokeCap(Cap.ROUND);
-    boxPaint.setStrokeJoin(Join.ROUND);
-    boxPaint.setStrokeMiter(100);
+    //boxPaint.setStrokeWidth(10.0f);
+    //boxPaint.setStrokeCap(Cap.ROUND);
+    //boxPaint.setStrokeJoin(Join.ROUND);
+    //boxPaint.setStrokeMiter(100);
 
     textSizePx =
         TypedValue.applyDimension(
@@ -138,10 +137,15 @@ public class MultiBoxTracker {
       final RectF trackedPos = new RectF(recognition.location);
 
       getFrameToCanvasMatrix().mapRect(trackedPos);
-      boxPaint.setColor(recognition.color);
 
-      float cornerSize = Math.min(trackedPos.width(), trackedPos.height()) / 8.0f;
-      canvas.drawRoundRect(trackedPos, cornerSize, cornerSize, boxPaint);
+      boxPaint.setColor(recognition.color);
+      boxPaint.setAlpha(50);
+      boxPaint.setStyle(Style.FILL);
+      canvas.drawRoundRect(trackedPos, 2, 2, boxPaint);
+
+      boxPaint.setAlpha(255);
+      boxPaint.setStyle(Style.STROKE);
+      canvas.drawRoundRect(trackedPos, 2, 2, boxPaint);
 
       final String labelString =
           !TextUtils.isEmpty(recognition.title)
@@ -149,8 +153,13 @@ public class MultiBoxTracker {
               : String.format("%.2f", (100 * recognition.detectionConfidence));
       //            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top,
       // labelString);
-      borderedText.drawText(
-          canvas, trackedPos.left + cornerSize, trackedPos.top, labelString + "%", boxPaint);
+      boxPaint.setTextSize(30);
+
+      Rect bounds = new Rect();
+      boxPaint.getTextBounds(labelString, 0, labelString.length(), bounds);
+
+      canvas.drawText(
+              labelString + "%", trackedPos.left, trackedPos.top-bounds.height()/2, boxPaint);
     }
   }
 

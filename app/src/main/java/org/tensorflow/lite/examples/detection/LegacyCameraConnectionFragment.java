@@ -16,6 +16,7 @@ package org.tensorflow.lite.examples.detection;
  * limitations under the License.
  */
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -36,6 +37,7 @@ import org.tensorflow.lite.examples.detection.customview.AutoFitTextureView;
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
 
+@SuppressLint("ValidFragment")
 public class LegacyCameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
   /** Conversion from screen rotation to JPEG orientation. */
@@ -85,7 +87,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
                 CameraConnectionFragment.chooseOptimalSize(
                     sizes, desiredSize.getWidth(), desiredSize.getHeight());
             parameters.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
-            camera.setDisplayOrientation(90);
+            camera.setDisplayOrientation(0);
             camera.setParameters(parameters);
             camera.setPreviewTexture(texture);
           } catch (IOException exception) {
@@ -96,7 +98,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
           Camera.Size s = camera.getParameters().getPreviewSize();
           camera.addCallbackBuffer(new byte[ImageUtils.getYUVByteSize(s.height, s.width)]);
 
-          textureView.setAspectRatio(s.height, s.width);
+          textureView.setAspectRatio(s.width, s.height);
 
           camera.startPreview();
         }
@@ -116,6 +118,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
   /** An additional thread for running tasks that shouldn't block the UI. */
   private HandlerThread backgroundThread;
 
+  @SuppressLint("ValidFragment")
   public LegacyCameraConnectionFragment(
       final Camera.PreviewCallback imageListener, final int layout, final Size desiredSize) {
     this.imageListener = imageListener;
