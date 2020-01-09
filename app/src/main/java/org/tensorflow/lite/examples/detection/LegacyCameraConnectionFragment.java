@@ -145,7 +145,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
   @Override
   public void onResume() {
     super.onResume();
-    startBackgroundThread();
+    //startBackgroundThread();
     // When the screen is turned off and turned back on, the SurfaceTexture is already
     // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
     // a camera and start preview from here (otherwise, we wait until the surface is ready in
@@ -153,6 +153,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
 
     if (textureView.isAvailable()) {
       camera.startPreview();
+      camera.setPreviewCallbackWithBuffer(imageListener);
     } else {
       textureView.setSurfaceTextureListener(surfaceTextureListener);
     }
@@ -161,7 +162,7 @@ public class LegacyCameraConnectionFragment extends Fragment {
   @Override
   public void onPause() {
     stopCamera();
-    stopBackgroundThread();
+    //stopBackgroundThread();
     super.onPause();
   }
 
@@ -185,9 +186,9 @@ public class LegacyCameraConnectionFragment extends Fragment {
   protected void stopCamera() {
     if (camera != null) {
       camera.stopPreview();
-      camera.setPreviewCallback(null);
-      camera.release();
-      camera = null;
+      //camera.setPreviewCallback(null);
+      //camera.release();
+      //camera = null;
     }
   }
 

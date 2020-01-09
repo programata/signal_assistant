@@ -39,9 +39,9 @@ public class MultiBoxTracker {
   private static final float TEXT_SIZE_DIP = 18;
   private static final float MIN_SIZE = 16.0f;
   private static final int[] COLORS = {
+    Color.GREEN,
     Color.BLUE,
     Color.RED,
-    Color.GREEN,
     Color.YELLOW,
     Color.CYAN,
     Color.MAGENTA,
@@ -119,6 +119,60 @@ public class MultiBoxTracker {
     return frameToCanvasMatrix;
   }
 
+  private void drawRecognitionRectangle(final TrackedRecognition recognition,
+                                        final Canvas canvas,
+                                        final Paint paint) {
+
+    final RectF trackedPos = new RectF(recognition.location);
+
+    this.getFrameToCanvasMatrix().mapRect(trackedPos);
+
+    final String labelString =
+            !TextUtils.isEmpty(recognition.title)
+                    ? String.format("%s %.2f", recognition.title.toUpperCase() + ": ", recognition.detectionConfidence)
+                    : String.format("%.2f", (100 * recognition.detectionConfidence));
+    //            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top,
+    // labelString);
+    paint.setTextSize(35);
+
+    Rect labelBounds = new Rect();
+    paint.getTextBounds(labelString, 0, labelString.length(), labelBounds);
+
+    RectF labelRect = new RectF(trackedPos.left,trackedPos.top - labelBounds.height() - 8,
+            trackedPos.left + labelBounds.width() + 8, trackedPos.top);
+
+    Rect rect = new Rect();
+    trackedPos.round(rect);
+
+    paint.setColor(recognition.color);
+    paint.setAlpha(50);
+    paint.setStyle(Style.FILL);
+    canvas.drawRect(trackedPos, paint);
+    canvas.drawRect(labelRect, paint);
+
+    paint.setAlpha(255);
+    paint.setStyle(Style.STROKE);
+    canvas.drawRect(trackedPos, paint);
+    canvas.drawRect(labelRect, paint);
+
+    Rect bounds = new Rect();
+    paint.getTextBounds("(0)", 0, 3, bounds);
+
+    canvas.drawText("("+ rect.left + "," + rect.top + ")", rect.left,
+            rect.top + bounds.height(), paint);
+
+    paint.getTextBounds("999999", 0, 6, bounds);
+    canvas.drawText("h:" + rect.height(), rect.right - bounds.width(),
+            rect.top + rect.height()/2 - bounds.height(), paint);
+
+    canvas.drawText("w:" + rect.width(), rect.left - bounds.width() + rect.width()/2,
+            rect.bottom  - bounds.height(), paint);
+
+    paint.setStyle(Style.STROKE);
+    canvas.drawText(
+            labelString, trackedPos.left, labelRect.bottom-4, paint);
+  }
+
   public synchronized void draw(final Canvas canvas) {
     final boolean rotated = sensorOrientation % 180 == 90;
     final float multiplier =
@@ -134,32 +188,7 @@ public class MultiBoxTracker {
             sensorOrientation,
             false);
     for (final TrackedRecognition recognition : trackedObjects) {
-      final RectF trackedPos = new RectF(recognition.location);
-
-      getFrameToCanvasMatrix().mapRect(trackedPos);
-
-      boxPaint.setColor(recognition.color);
-      boxPaint.setAlpha(50);
-      boxPaint.setStyle(Style.FILL);
-      canvas.drawRoundRect(trackedPos, 2, 2, boxPaint);
-
-      boxPaint.setAlpha(255);
-      boxPaint.setStyle(Style.STROKE);
-      canvas.drawRoundRect(trackedPos, 2, 2, boxPaint);
-
-      final String labelString =
-          !TextUtils.isEmpty(recognition.title)
-              ? String.format("%s %.2f", recognition.title, (100 * recognition.detectionConfidence))
-              : String.format("%.2f", (100 * recognition.detectionConfidence));
-      //            borderedText.drawText(canvas, trackedPos.left + cornerSize, trackedPos.top,
-      // labelString);
-      boxPaint.setTextSize(30);
-
-      Rect bounds = new Rect();
-      boxPaint.getTextBounds(labelString, 0, labelString.length(), bounds);
-
-      canvas.drawText(
-              labelString + "%", trackedPos.left, trackedPos.top-bounds.height()/2, boxPaint);
+      this.drawRecognitionRectangle(recognition, canvas, boxPaint);
     }
   }
 

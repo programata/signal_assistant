@@ -58,7 +58,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   // Minimum detection confidence to track a detection.
   private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
   private static final boolean MAINTAIN_ASPECT = false;
-  private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
+  private static final Size DESIRED_PREVIEW_SIZE = new Size(1280, 720);
   private static final boolean SAVE_PREVIEW_BITMAP = false;
   private static final float TEXT_SIZE_DIP = 10;
   OverlayView trackingOverlay;
@@ -132,19 +132,28 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     cropToFrameTransform = new Matrix();
     frameToCropTransform.invert(cropToFrameTransform);
 
-    trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
+    trackingOverlay = this.findViewById(R.id.tracking_overlay);
     trackingOverlay.addCallback(
-        new DrawCallback() {
-          @Override
-          public void drawCallback(final Canvas canvas) {
-            tracker.draw(canvas);
-            if (isDebug()) {
-              tracker.drawDebug(canvas);
-            }
-          }
-        });
+            canvas -> {
+              tracker.draw(canvas);
+              if (isDebug()) {
+                tracker.drawDebug(canvas);
+              }
+            });
 
     tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
+  }
+
+  @Override
+  public synchronized void onResume() {
+    super.onResume();
+    this.computingDetection = false;
+  }
+
+  @Override
+  public synchronized void onPause() {
+    super.onPause();
+    this.computingDetection = false;
   }
 
   @Override
@@ -182,13 +191,6 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             final List<Classifier.Recognition> results = detector.recognizeImage(croppedBitmap);
             lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
-            cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-            final Canvas canvas = new Canvas(cropCopyBitmap);
-            final Paint paint = new Paint();
-            paint.setColor(Color.RED);
-            paint.setStyle(Style.STROKE);
-            paint.setStrokeWidth(2.0f);
-
             float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
             switch (MODE) {
               case TF_OD_API:
@@ -202,7 +204,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             for (final Classifier.Recognition result : results) {
               final RectF location = result.getLocation();
               if (location != null && result.getConfidence() >= minimumConfidence) {
-                canvas.drawRect(location, paint);
+                //canvas.drawRect(location, paint);
 
                 cropToFrameTransform.mapRect(location);
 
