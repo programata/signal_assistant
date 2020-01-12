@@ -52,13 +52,13 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   // Configuration values for the prepackaged SSD model.
   private static final int TF_OD_API_INPUT_SIZE = 300;
   private static final boolean TF_OD_API_IS_QUANTIZED = true;
-  private static final String TF_OD_API_MODEL_FILE = "detect_stop.tflite";
+  private static final String TF_OD_API_MODEL_FILE = "detect_stop-48000.tflite";
   private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/labelmap_stop.txt";
   private static final DetectorMode MODE = DetectorMode.TF_OD_API;
   // Minimum detection confidence to track a detection.
   private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
   private static final boolean MAINTAIN_ASPECT = false;
-  private static final Size DESIRED_PREVIEW_SIZE = new Size(1280, 720);
+  private static final Size DESIRED_PREVIEW_SIZE = new Size(320, 240);
   private static final boolean SAVE_PREVIEW_BITMAP = false;
   private static final float TEXT_SIZE_DIP = 10;
   OverlayView trackingOverlay;
@@ -66,10 +66,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
   private Classifier detector;
 
-  private long lastProcessingTimeMs;
   private Bitmap rgbFrameBitmap = null;
   private Bitmap croppedBitmap = null;
-  private Bitmap cropCopyBitmap = null;
 
   private boolean computingDetection = false;
 
@@ -182,54 +180,46 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     }
 
     runInBackground(
-        new Runnable() {
-          @Override
-          public void run() {
+            () -> {
 
-            LOGGER.i("Running detection on image " + currTimestamp);
-            final long startTime = SystemClock.uptimeMillis();
-            final List<Classifier.Recognition> results = detector.recognizeImage(croppedBitmap);
-            lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+              LOGGER.i("Running detection on image " + currTimestamp);
+              final long startTime = SystemClock.uptimeMillis();
+              final List<Classifier.Recognition> results = detector.recognizeImage(croppedBitmap);
 
-            float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-            switch (MODE) {
-              case TF_OD_API:
-                minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-                break;
-            }
-
-            final List<Classifier.Recognition> mappedRecognitions =
-                new LinkedList<Classifier.Recognition>();
-
-            for (final Classifier.Recognition result : results) {
-              final RectF location = result.getLocation();
-              if (location != null && result.getConfidence() >= minimumConfidence) {
-                //canvas.drawRect(location, paint);
-
-                cropToFrameTransform.mapRect(location);
-
-                result.setLocation(location);
-                mappedRecognitions.add(result);
+              float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
+              switch (MODE) {
+                case TF_OD_API:
+                  minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
+                  break;
               }
 
-            }
+              final List<Classifier.Recognition> mappedRecognitions =
+                  new LinkedList<Classifier.Recognition>();
 
-            tracker.trackResults(mappedRecognitions, currTimestamp);
-            trackingOverlay.postInvalidate();
+              for (final Classifier.Recognition result : results) {
+                final RectF location = result.getLocation();
+                if (location != null && result.getConfidence() >= minimumConfidence) {
 
-            computingDetection = false;
+                  cropToFrameTransform.mapRect(location);
 
-            runOnUiThread(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    //showFrameInfo(previewWidth + "x" + previewHeight);
-                    //showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                    //showInference(lastProcessingTimeMs + "ms");
-                  }
-                });
-          }
-        });
+                  result.setLocation(location);
+                  mappedRecognitions.add(result);
+                }
+
+              }
+
+              tracker.trackResults(mappedRecognitions, currTimestamp);
+              trackingOverlay.postInvalidate();
+
+              computingDetection = false;
+
+              runOnUiThread(
+                      () -> {
+                        //showFrameInfo(previewWidth + "x" + previewHeight);
+                        //showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
+                        //showInference(lastProcessingTimeMs + "ms");
+                      });
+            });
   }
 
   @Override
