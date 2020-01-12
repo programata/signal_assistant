@@ -152,8 +152,6 @@ public class MultiBoxTracker {
 
     paint.setAlpha(255);
     paint.setStyle(Style.STROKE);
-    canvas.drawRect(trackedPos, paint);
-    canvas.drawRect(labelRect, paint);
 
     Rect bounds = new Rect();
     paint.getTextBounds("(0)", 0, 3, bounds);
@@ -171,6 +169,12 @@ public class MultiBoxTracker {
     paint.setStyle(Style.STROKE);
     canvas.drawText(
             labelString, trackedPos.left, labelRect.bottom-4, paint);
+
+    float width = paint.getStrokeWidth();
+    paint.setStrokeWidth(3.0f);
+    canvas.drawRect(trackedPos, paint);
+    canvas.drawRect(labelRect, paint);
+    paint.setStrokeWidth(width);
   }
 
   public synchronized void draw(final Canvas canvas) {
